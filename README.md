@@ -49,7 +49,7 @@ npm install
 npm run build
 
 # 複製到外掛目錄
-cp main.js manifest.json styles.css /path/to/vault/.obsidian/plugins/obsidian-ai-terminal/
+cp main.js manifest.json styles.css /to/vault/.obsidian/plugins/obsidian-ai-terminal/
 cp -r scripts /path/to/vault/.obsidian/plugins/obsidian-ai-terminal/
 ```
 

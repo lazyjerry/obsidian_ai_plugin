@@ -269,29 +269,35 @@ export class TerminalView extends ItemView {
    * 處理終端輸入（含上下文指令處理）
    */
   private handleTerminalInput(data: string): void {
-    // 累積輸入到緩衝區
-    this.inputBuffer += data;
-    
     // 檢查是否為 Enter 鍵（\r 或 \n）
     const isEnter = data === '\r' || data === '\n';
     
-    if (isEnter && this.contextHandler.hasContextCommands(this.inputBuffer)) {
+    // 累積輸入到緩衝區（不含 Enter）
+    if (!isEnter) {
+      // 如果是 Backspace，從緩衝區移除最後一個字元
+      if (data === '\x7f' || data === '\b') {
+        this.inputBuffer = this.inputBuffer.slice(0, -1);
+      } else {
+        this.inputBuffer += data;
+      }
+      // 直接傳遞到 PTY（PTY 會 echo 回來顯示）
+      this.ptySession?.write(data);
+      return;
+    }
+    
+    // Enter 鍵處理
+    if (this.contextHandler.hasContextCommands(this.inputBuffer)) {
       try {
         // 替換上下文指令
         const processedInput = this.contextHandler.replaceContextCommands(this.inputBuffer);
         
-        // 清空終端當前行並顯示替換後的指令
-        // 先退格清除已輸入的內容
-        const backspaces = '\b'.repeat(this.inputBuffer.length - 1);
-        const clearLine = ' '.repeat(this.inputBuffer.length - 1);
-        this.emulator?.write(backspaces + clearLine + backspaces);
+        // 清空終端當前行（使用 ANSI escape sequence）
+        // \x1b[2K 清除整行，\x1b[G 移動到行首
+        this.emulator?.write('\x1b[2K\x1b[G');
         
-        // 顯示替換後的指令（去除最後的換行）
-        const displayInput = processedInput.replace(/[\r\n]+$/, '');
-        this.emulator?.write(displayInput + '\r\n');
-        
-        // 發送替換後的指令到 PTY
-        this.ptySession?.write(processedInput);
+        // 重新顯示提示符和替換後的指令
+        // 發送替換後的指令到 PTY（包含 Enter）
+        this.ptySession?.write(processedInput + '\r');
         
         // 清空緩衝區
         this.inputBuffer = '';
@@ -305,22 +311,14 @@ export class TerminalView extends ItemView {
             new Notice(`錯誤：${error.message}`);
           }
         }
-        // 仍然發送原始輸入
-        this.ptySession?.write(this.inputBuffer);
+        // 發送 Enter 執行原始指令
+        this.ptySession?.write('\r');
         this.inputBuffer = '';
       }
-    } else if (isEnter) {
-      // 無上下文指令，直接發送
-      this.ptySession?.write(this.inputBuffer);
-      this.inputBuffer = '';
     } else {
-      // 非 Enter 鍵，直接傳遞到 PTY
-      this.ptySession?.write(data);
-      
-      // 如果是 Backspace，需要從緩衝區移除最後一個字元
-      if (data === '\x7f' || data === '\b') {
-        this.inputBuffer = this.inputBuffer.slice(0, -2); // 移除 backspace 和前一個字元
-      }
+      // 無上下文指令，直接發送 Enter
+      this.ptySession?.write('\r');
+      this.inputBuffer = '';
     }
   }
   

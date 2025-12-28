@@ -95,6 +95,9 @@ export class XtermEmulator {
       convertEol: true,
       scrollback: 1000,
       allowProposedApi: true,
+      // 啟用選取功能
+      allowTransparency: true,
+      rightClickSelectsWord: true,
     };
     
     this._terminal = new Terminal(terminalOptions);
@@ -155,14 +158,61 @@ export class XtermEmulator {
     // 初始調整大小
     this.fit();
     
-    // 設定 ResizeObserver 監聽容器大小變化
+    // 設定 ResizeObserver 監聯容器大小變化
     this._resizeObserver = new ResizeObserver(() => {
       this.fit();
     });
     this._resizeObserver.observe(container);
     
+    // 設定選取複製功能
+    this.setupCopyOnSelect();
+    
     // 聚焦終端
     this._terminal.focus();
+  }
+  
+  /**
+   * 設定選取時自動複製到剪貼簿
+   */
+  private setupCopyOnSelect(): void {
+    // 監聽選取變化事件
+    const selectionDisposable = this._terminal.onSelectionChange(() => {
+      const selection = this._terminal.getSelection();
+      if (selection) {
+        // 選取後自動複製到剪貼簿
+        navigator.clipboard.writeText(selection).catch(() => {
+          // 忽略剪貼簿錯誤
+        });
+      }
+    });
+    this._disposables.push(selectionDisposable);
+    
+    // 支援 Ctrl+C 複製（當有選取時）和 Ctrl+V 貼上
+    this._terminal.attachCustomKeyEventHandler((event: KeyboardEvent) => {
+      // Ctrl+Shift+C 或 Cmd+C（Mac）複製
+      if ((event.ctrlKey || event.metaKey) && event.key === 'c' && this._terminal.hasSelection()) {
+        const selection = this._terminal.getSelection();
+        if (selection) {
+          navigator.clipboard.writeText(selection);
+        }
+        return false; // 阻止預設行為（不發送 SIGINT）
+      }
+      
+      // Ctrl+Shift+V 或 Cmd+V（Mac）貼上
+      if ((event.ctrlKey || event.metaKey) && event.key === 'v') {
+        navigator.clipboard.readText().then((text) => {
+          if (text) {
+            // 發送貼上的文字到終端
+            this._terminal.paste(text);
+          }
+        }).catch(() => {
+          // 忽略剪貼簿錯誤
+        });
+        return false;
+      }
+      
+      return true; // 允許其他按鍵正常處理
+    });
   }
   
   /**
