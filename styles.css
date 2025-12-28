@@ -1,0 +1,83 @@
+/* AI Terminal 樣式 */
+
+.ai-terminal-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background-color: #1e1e1e;
+}
+
+.ai-terminal-wrapper {
+  flex: 1;
+  overflow: hidden;
+  padding: 4px;
+}
+
+.ai-terminal-wrapper .xterm {
+  height: 100%;
+}
+
+.ai-terminal-wrapper .xterm-viewport {
+  overflow-y: auto;
+}
+
+.ai-terminal-statusbar {
+  padding: 4px 8px;
+  background-color: #252526;
+  color: #cccccc;
+  font-size: 12px;
+  border-top: 1px solid #3c3c3c;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Modal 樣式 */
+.ai-terminal-warning-text {
+  color: #e5c07b;
+  font-weight: 500;
+  margin-top: 16px;
+}
+
+.ai-terminal-modal-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 24px;
+}
+
+.ai-terminal-modal-buttons button {
+  padding: 8px 16px;
+}
+
+.ai-terminal-modal-buttons button.mod-warning {
+  background-color: #e06c75;
+  color: white;
+}
+
+.ai-terminal-modal-buttons button.mod-warning:hover {
+  background-color: #be5046;
+}
+
+/* 終端選取樣式 */
+.ai-terminal-wrapper .xterm .xterm-selection div {
+  background-color: rgba(100, 150, 255, 0.3);
+}
+
+/* 捲軸樣式 */
+.ai-terminal-wrapper .xterm .xterm-viewport::-webkit-scrollbar {
+  width: 10px;
+}
+
+.ai-terminal-wrapper .xterm .xterm-viewport::-webkit-scrollbar-track {
+  background: #1e1e1e;
+}
+
+.ai-terminal-wrapper .xterm .xterm-viewport::-webkit-scrollbar-thumb {
+  background: #4a4a4a;
+  border-radius: 5px;
+}
+
+.ai-terminal-wrapper .xterm .xterm-viewport::-webkit-scrollbar-thumb:hover {
+  background: #5a5a5a;
+}

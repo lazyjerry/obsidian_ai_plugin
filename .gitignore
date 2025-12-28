@@ -1,0 +1,44 @@
+# Dependency directories
+node_modules/
+
+# Build outputs
+main.js
+main.js.map
+dist/
+
+# Obsidian plugin files (auto-generated)
+.hotreload
+
+# IDE and editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test coverage
+coverage/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# TypeScript cache
+*.tsbuildinfo
+
+# npm
+npm-debug.log*
+package-lock.json
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
