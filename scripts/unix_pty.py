@@ -87,15 +87,15 @@ def main():
         env['LC_ALL'] = 'en_US.UTF-8'
         env['LANG'] = 'en_US.UTF-8'
         
-        # 執行 shell
+        # 執行 shell（正常互動式登入 shell）
         os.execve(shell, [shell, '-l'], env)
     
     else:
         # 父進程：處理 I/O
         os.close(slave_fd)
         
-        # 輸出 PID 供 Node.js 追蹤
-        print(json.dumps({"pid": pid, "status": "running"}), flush=True)
+        # 輸出 PID 供 Node.js 追蹤（輸出到 stderr 避免污染終端輸出）
+        print(json.dumps({"pid": pid, "status": "running"}), file=sys.stderr, flush=True)
         
         # 設定 stdin 為非阻塞模式
         stdin_fd = sys.stdin.fileno()

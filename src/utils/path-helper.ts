@@ -122,8 +122,8 @@ export class PathHelper implements PathHelperAPI {
       // Windows：優先使用 PowerShell，其次 cmd
       return process.env.COMSPEC || 'cmd.exe';
     } else {
-      // Unix：使用環境變數 SHELL，預設 /bin/bash
-      return process.env.SHELL || '/bin/bash';
+      // Unix：強制使用 bash（避免 zsh 的 PROMPT_SP 問題）
+      return '/bin/bash';
     }
   }
   

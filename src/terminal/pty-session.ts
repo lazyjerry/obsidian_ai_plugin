@@ -130,28 +130,20 @@ export class PtySession implements PtyProcess {
       // 處理 stdout（終端輸出）
       this._pythonProcess.stdout?.on('data', (data: Buffer) => {
         const text = data.toString('utf-8');
+        this._dataListeners.forEach(listener => listener(text));
+      });
+      
+      // 處理 stderr（錯誤、狀態訊息、以及 shell 的 stderr）
+      this._pythonProcess.stderr?.on('data', (data: Buffer) => {
+        const text = data.toString('utf-8');
         
-        // 嘗試解析啟動訊息
+        // 嘗試解析 JSON 訊息（PID、退出狀態等）
         try {
           const msg = JSON.parse(text);
           if (msg.pid && msg.status === 'running') {
             this._pid = msg.pid;
             return;
           }
-        } catch {
-          // 不是 JSON，正常終端輸出
-        }
-        
-        this._dataListeners.forEach(listener => listener(text));
-      });
-      
-      // 處理 stderr（錯誤與狀態訊息）
-      this._pythonProcess.stderr?.on('data', (data: Buffer) => {
-        const text = data.toString('utf-8');
-        
-        // 嘗試解析退出訊息
-        try {
-          const msg = JSON.parse(text);
           if (msg.status === 'exited') {
             this._exitCode = msg.exitCode ?? 0;
             this._exitListeners.forEach(listener => listener(this._exitCode!));
@@ -164,7 +156,7 @@ export class PtySession implements PtyProcess {
             return;
           }
         } catch {
-          // 不是 JSON，可能是 shell 的 stderr 輸出
+          // 不是 JSON，可能是 shell 的 stderr 輸出，傳遞到終端
           this._dataListeners.forEach(listener => listener(text));
         }
       });

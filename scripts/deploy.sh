@@ -65,6 +65,17 @@ echo -e "${YELLOW}專案目錄:${NC} $PROJECT_DIR"
 echo -e "${YELLOW}目標目錄:${NC} $TARGET_DIR"
 echo ""
 
+# 執行建置
+echo -e "${BLUE}執行建置...${NC}"
+cd "$PROJECT_DIR"
+if npm run build; then
+    echo -e "${GREEN}✓${NC} 建置成功"
+else
+    echo -e "${RED}✗${NC} 建置失敗"
+    exit 1
+fi
+echo ""
+
 # 檢查必要檔案是否存在
 echo -e "${BLUE}檢查建置檔案...${NC}"
 
@@ -78,23 +89,11 @@ for file in "${REQUIRED_FILES[@]}"; do
 done
 
 if [ ${#MISSING_FILES[@]} -gt 0 ]; then
-    echo -e "${RED}錯誤: 缺少必要檔案:${NC}"
+    echo -e "${RED}錯誤: 建置後仍缺少必要檔案:${NC}"
     for file in "${MISSING_FILES[@]}"; do
         echo -e "  - $file"
     done
-    echo ""
-    echo -e "${YELLOW}請先執行 'npm run build' 建置專案${NC}"
-    
-    read -p "是否現在執行建置? (y/N) " -n 1 -r
-    echo ""
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        echo -e "${BLUE}執行建置...${NC}"
-        cd "$PROJECT_DIR"
-        npm run build
-        echo ""
-    else
-        exit 1
-    fi
+    exit 1
 fi
 
 echo -e "${GREEN}✓${NC} 所有必要檔案已就緒"

@@ -98,6 +98,8 @@ export class XtermEmulator {
       // 啟用選取功能
       allowTransparency: true,
       rightClickSelectsWord: true,
+      // 啟用滑鼠支援（選取文字）
+      windowsMode: false,
     };
     
     this._terminal = new Terminal(terminalOptions);
@@ -172,6 +174,61 @@ export class XtermEmulator {
   }
   
   /**
+   * 複製文字到剪貼簿（相容 Electron/Obsidian 環境）
+   */
+  private async copyToClipboard(text: string): Promise<boolean> {
+    try {
+      // 優先使用 Electron 的 clipboard 模組
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { clipboard } = require('electron');
+      clipboard.writeText(text);
+      return true;
+    } catch {
+      // Electron clipboard 不可用，嘗試 navigator.clipboard
+      try {
+        await navigator.clipboard.writeText(text);
+        return true;
+      } catch {
+        // 所有方法都失敗，使用 document.execCommand 作為備用
+        try {
+          const textArea = document.createElement('textarea');
+          textArea.value = text;
+          textArea.style.position = 'fixed';
+          textArea.style.left = '-9999px';
+          textArea.style.top = '-9999px';
+          document.body.appendChild(textArea);
+          textArea.focus();
+          textArea.select();
+          const result = document.execCommand('copy');
+          document.body.removeChild(textArea);
+          return result;
+        } catch {
+          return false;
+        }
+      }
+    }
+  }
+  
+  /**
+   * 從剪貼簿讀取文字（相容 Electron/Obsidian 環境）
+   */
+  private async readFromClipboard(): Promise<string> {
+    try {
+      // 優先使用 Electron 的 clipboard 模組
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { clipboard } = require('electron');
+      return clipboard.readText() || '';
+    } catch {
+      // Electron clipboard 不可用，嘗試 navigator.clipboard
+      try {
+        return await navigator.clipboard.readText();
+      } catch {
+        return '';
+      }
+    }
+  }
+  
+  /**
    * 設定選取時自動複製到剪貼簿
    */
   private setupCopyOnSelect(): void {
@@ -180,9 +237,7 @@ export class XtermEmulator {
       const selection = this._terminal.getSelection();
       if (selection) {
         // 選取後自動複製到剪貼簿
-        navigator.clipboard.writeText(selection).catch(() => {
-          // 忽略剪貼簿錯誤
-        });
+        this.copyToClipboard(selection);
       }
     });
     this._disposables.push(selectionDisposable);
@@ -193,20 +248,18 @@ export class XtermEmulator {
       if ((event.ctrlKey || event.metaKey) && event.key === 'c' && this._terminal.hasSelection()) {
         const selection = this._terminal.getSelection();
         if (selection) {
-          navigator.clipboard.writeText(selection);
+          this.copyToClipboard(selection);
         }
         return false; // 阻止預設行為（不發送 SIGINT）
       }
       
       // Ctrl+Shift+V 或 Cmd+V（Mac）貼上
       if ((event.ctrlKey || event.metaKey) && event.key === 'v') {
-        navigator.clipboard.readText().then((text) => {
+        this.readFromClipboard().then((text) => {
           if (text) {
             // 發送貼上的文字到終端
             this._terminal.paste(text);
           }
-        }).catch(() => {
-          // 忽略剪貼簿錯誤
         });
         return false;
       }

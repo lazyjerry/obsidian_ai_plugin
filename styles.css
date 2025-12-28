@@ -1,5 +1,16 @@
 /* AI Terminal 樣式 */
 
+/* 隱藏 xterm.js 的輔助輸入框（用於 IME）*/
+.ai-terminal-wrapper .xterm-helper-textarea {
+  position: absolute !important;
+  opacity: 0 !important;
+  left: -9999px !important;
+  top: -9999px !important;
+  width: 0 !important;
+  height: 0 !important;
+  pointer-events: none !important;
+}
+
 .ai-terminal-container {
   display: flex;
   flex-direction: column;
@@ -61,7 +72,16 @@
 
 /* 終端選取樣式 */
 .ai-terminal-wrapper .xterm .xterm-selection div {
-  background-color: rgba(100, 150, 255, 0.3);
+  background-color: rgba(100, 150, 255, 0.3) !important;
+}
+
+/* 確保終端可以接收滑鼠事件 */
+.ai-terminal-wrapper .xterm {
+  cursor: text;
+}
+
+.ai-terminal-wrapper .xterm-screen {
+  cursor: text;
 }
 
 /* 捲軸樣式 */
